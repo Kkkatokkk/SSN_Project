@@ -1,0 +1,4 @@
+10/16/2026-21:41:05.010526  [Drop] [**] [1:1000001:2] SSN Old TLS 1.0 negotiated [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 10.200.0.2:4430 -> 192.168.25.137:47956
+10/16/2026-21:47:41.170866  [Drop] [**] [1:1000001:2] SSN Old TLS 1.0 negotiated [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 10.200.0.2:4431 -> 192.168.25.137:54656
+10/16/2026-21:48:56.768708  [Drop] [**] [1:1000001:2] SSN Old TLS 1.0 negotiated [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 10.200.0.2:4432 -> 192.168.25.137:36036
+10/16/2026-22:06:59.431843  [Drop] [**] [1:1001001:2] SSN Tor relay connection attempt group 1 [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 192.168.25.137:40220 -> 1.1.168.51:9001
