@@ -1,0 +1,38 @@
+#!/usr/sbin/nft -f
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        ct state invalid drop
+        iif "lo" accept
+        ip saddr 192.168.25.1 tcp dport 22 accept
+        icmp type echo-request accept
+        log prefix "NFT-IN-DROP: " counter
+    }
+
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+        ct state established,related accept
+        ct state invalid drop
+        ip saddr 192.168.25.137 ct state new accept
+        log prefix "NFT-FWD-DROP: " counter
+    }
+
+    chain ips {
+        type filter hook forward priority 10; policy accept;
+        counter queue num 0 bypass
+    }
+
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+}
+
+table ip nat {
+    chain postrouting {
+        type nat hook postrouting priority 100; policy accept;
+        ip saddr 192.168.25.137 oifname "ens33" masquerade
+    }
+}
