@@ -1,0 +1,106 @@
+{
+  "title": "SSN Firewall",
+  "uid": "ssn-firewall",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "stat", "title": "Suricata alerts",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [ { "refId": "A", "queryType": "instant",
+        "expr": "sum(count_over_time({job=\"suricata\", event_type=\"alert\"} [$__range]))" } ]
+    },
+    {
+      "type": "stat", "title": "Blocked by Suricata",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [ { "refId": "A", "queryType": "instant",
+        "expr": "sum(count_over_time({job=\"suricata\", event_type=\"alert\"} | json | alert_action=\"blocked\" [$__range]))" } ]
+    },
+    {
+      "type": "stat", "title": "TLS connections seen",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [ { "refId": "A", "queryType": "instant",
+        "expr": "sum(count_over_time({job=\"suricata\", event_type=\"tls\"} [$__range]))" } ]
+    },
+    {
+      "type": "stat", "title": "nftables drops",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [ { "refId": "A", "queryType": "instant",
+        "expr": "sum(count_over_time({job=\"nftables\"} |= \"NFT-\" [$__range]))" } ]
+    },
+    {
+      "type": "bargauge", "title": "Alerts by rule type",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] },
+      "options": { "orientation": "horizontal", "displayMode": "gradient",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [
+        { "refId": "A", "queryType": "instant", "legendFormat": "Old TLS",
+          "expr": "sum(count_over_time({job=\"suricata\", event_type=\"alert\"} |= \"SSN Old TLS\" [$__range]))" },
+        { "refId": "B", "queryType": "instant", "legendFormat": "Tor",
+          "expr": "sum(count_over_time({job=\"suricata\", event_type=\"alert\"} |= \"SSN Tor\" [$__range]))" }
+      ]
+    },
+    {
+      "type": "bargauge", "title": "TLS versions seen by Suricata",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": { "orientation": "horizontal", "displayMode": "gradient",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [ { "refId": "A", "queryType": "instant", "legendFormat": "{{tls_version}}",
+        "expr": "sum by (tls_version) (count_over_time({job=\"suricata\", event_type=\"tls\"} | json | label_format tls_version=`{{ .tls_version | replace \"TLSv1\" \"TLS 1.0\" }}` [$__range]))" } ]
+    },
+    {
+      "type": "bargauge", "title": "Top destinations in alerts",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": { "orientation": "horizontal", "displayMode": "gradient",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [ { "refId": "A", "queryType": "instant", "legendFormat": "{{dest_ip}}:{{dest_port}}",
+        "expr": "topk(10, sum by (dest_ip, dest_port) (count_over_time({job=\"suricata\", event_type=\"alert\"} | json [$__range])))" } ]
+    },
+    {
+      "type": "timeseries", "title": "Alerts over time (per minute)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "refId": "A", "queryType": "range", "legendFormat": "Old TLS",
+          "expr": "sum(count_over_time({job=\"suricata\", event_type=\"alert\"} |= \"SSN Old TLS\" [1m]))" },
+        { "refId": "B", "queryType": "range", "legendFormat": "Tor",
+          "expr": "sum(count_over_time({job=\"suricata\", event_type=\"alert\"} |= \"SSN Tor\" [1m]))" }
+      ]
+    },
+    {
+      "type": "bargauge", "title": "nftables drops by chain and port",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": { "defaults": { "noValue": "0" }, "overrides": [] },
+      "options": { "orientation": "horizontal", "displayMode": "gradient",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "targets": [ { "refId": "A", "queryType": "instant", "legendFormat": "{{prefix}} port {{dport}}",
+        "expr": "sum by (prefix, dport) (count_over_time({job=\"nftables\"} | regexp `(?P<prefix>NFT-[A-Z]+-DROP):.*?DPT=(?P<dport>\\d+)` [$__range]))" } ]
+    },
+    {
+      "type": "logs", "title": "Latest alerts",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [ { "refId": "A", "queryType": "range",
+        "expr": "{job=\"suricata\", event_type=\"alert\"} | json | line_format `{{.alert_action}} | {{.alert_signature}} | {{.src_ip}} -> {{.dest_ip}}:{{.dest_port}}`" } ]
+    }
+  ]
+}

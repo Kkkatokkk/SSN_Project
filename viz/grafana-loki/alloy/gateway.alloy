@@ -1,0 +1,48 @@
+// SSN project - Alloy config for the gateway (live logs).
+// Sends Suricata eve.json and nftables drop logs to Loki on the client VM.
+
+// --- Suricata ---
+local.file_match "suricata" {
+  path_targets = [{"__path__" = "/var/log/suricata/eve.json", "job" = "suricata"}]
+}
+
+loki.source.file "suricata" {
+  targets    = local.file_match.suricata.targets
+  forward_to = [loki.process.suricata.receiver]
+}
+
+loki.process "suricata" {
+  stage.json {
+    expressions = { event_type = "event_type", ts = "timestamp" }
+  }
+  stage.labels {
+    values = { event_type = "" }
+  }
+  stage.timestamp {
+    source = "ts"
+    format = "2006-01-02T15:04:05.999999-0700"
+  }
+  forward_to = [loki.write.client.receiver]
+}
+
+// --- nftables (kernel log) ---
+loki.source.journal "kernel" {
+  matches    = "_TRANSPORT=kernel"
+  labels     = { job = "nftables" }
+  forward_to = [loki.process.nftables.receiver]
+}
+
+loki.process "nftables" {
+  stage.match {
+    selector = "{job=\"nftables\"} !~ \"NFT-\""
+    action   = "drop"
+  }
+  forward_to = [loki.write.client.receiver]
+}
+
+// --- output ---
+loki.write "client" {
+  endpoint {
+    url = "http://192.168.100.10:3100/loki/api/v1/push"
+  }
+}

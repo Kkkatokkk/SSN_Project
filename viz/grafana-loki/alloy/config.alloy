@@ -1,0 +1,27 @@
+// SSN project - Alloy config (development).
+// Reads Suricata eve.json, adds the event type as a label, sends to Loki.
+
+local.file_match "suricata" {
+  path_targets = [{"__path__" = "/logs/suricata/eve.json", "job" = "suricata"}]
+}
+
+loki.source.file "suricata" {
+  targets    = local.file_match.suricata.targets
+  forward_to = [loki.process.suricata.receiver]
+}
+
+loki.process "suricata" {
+  stage.json {
+    expressions = { event_type = "event_type" }
+  }
+  stage.labels {
+    values = { event_type = "" }
+  }
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

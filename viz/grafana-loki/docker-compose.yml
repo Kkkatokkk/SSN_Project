@@ -1,0 +1,32 @@
+# SSN project - log visualisation: Alloy -> Loki -> Grafana
+# Test setup (client VM):  docker compose up -d                -> Loki + Grafana
+# Development (sample data): docker compose --profile dev up -d -> + Alloy reading ./sample
+# On the test setup Alloy runs on the gateway (alloy/gateway.alloy).
+services:
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+
+  alloy:
+    image: grafana/alloy:latest
+    profiles: ["dev"]
+    command: run --server.http.listen-addr=0.0.0.0:12345 /etc/alloy/config.alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ./sample:/logs/suricata:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
