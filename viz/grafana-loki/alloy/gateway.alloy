@@ -1,5 +1,5 @@
 // SSN project - Alloy config for the gateway (live logs).
-// Sends Suricata eve.json and nftables drop logs to Loki on the client VM.
+// Sends Suricata eve.json and nftables drop logs to Loki on the gateway itself (127.0.0.1).
 
 // --- Suricata ---
 local.file_match "suricata" {
@@ -43,6 +43,6 @@ loki.process "nftables" {
 // --- output ---
 loki.write "client" {
   endpoint {
-    url = "http://192.168.100.10:3100/loki/api/v1/push"
+    url = "http://127.0.0.1:3100/loki/api/v1/push"
   }
 }

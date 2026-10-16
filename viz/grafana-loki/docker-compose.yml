@@ -23,6 +23,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      LOKI_URL: "http://loki:3100"
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
       GF_AUTH_DISABLE_LOGIN_FORM: "true"
